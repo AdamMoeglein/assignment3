@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <assert.h>
 
 #include "list.h"
 
@@ -30,7 +31,9 @@ struct list {
  * returns a pointer to it.
  */
 struct list* list_create() {
-  return NULL;
+  struct list* list = malloc(sizeof(struct list));
+  list->head = NULL;
+  return list;
 }
 
 /*
@@ -42,7 +45,19 @@ struct list* list_create() {
  *   list - the linked list to be destroyed.  May not be NULL.
  */
 void list_free(struct list* list) {
-  return;
+  assert(list);
+
+  /*
+   * Free all individual links.
+   */
+  struct link* next, * curr = list->head;
+  while (curr != NULL) {
+    next = curr->next;
+    free(curr);
+    curr = next;
+  }
+
+  free(list);
 }
 
 /*
@@ -55,14 +70,27 @@ void list_free(struct list* list) {
  *     which means that a pointer of any type can be passed.
  */
 void list_insert(struct list* list, void* val) {
-  return;
+  assert(list);
+
+  /*
+   * Create new link and insert at head.
+   */
+  struct link* link = malloc(sizeof(struct link));
+  link->val = val;
+  link->next = list->head;
+  list->head = link;
 }
 
 /*
  * This function returns 1 if the list is empty and 0 otherwise.
  */
 int list_isempty(struct list* list) {
-  return 1;
+  assert(list);
+  if (list->head) {
+    return 0;
+  } else {
+    return 1;
+  }
 }
 
 /*
@@ -70,7 +98,13 @@ int list_isempty(struct list* list) {
  * or NULL if the list is empty.
  */
 void* list_head(struct list* list) {
-  return NULL;
+  assert(list);
+
+  if (list->head) {
+    return list->head->val;
+  } else {
+    return NULL;
+  }
 }
 
 /*
@@ -78,5 +112,11 @@ void* list_head(struct list* list) {
  * If the list is empty, this function is a noop.
  */
 void list_remove_head(struct list* list) {
-  return;
+  assert(list);
+
+  if (list->head) {
+    struct link* old_head = list->head;
+    list->head = old_head->next;
+    free(old_head);
+  }
 }

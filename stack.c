@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <assert.h>
 
 #include "stack.h"
 #include "list.h"
@@ -23,7 +24,9 @@ struct stack {
  * pointer to it.
  */
 struct stack* stack_create() {
-  return NULL;
+  struct stack* stack = malloc(sizeof(struct stack));
+  stack->list = list_create();
+  return stack;
 }
 
 /*
@@ -35,7 +38,9 @@ struct stack* stack_create() {
  *   stack - the stack to be destroyed.  May not be NULL.
  */
 void stack_free(struct stack* stack) {
-  return;
+  assert(stack);
+  list_free(stack->list);
+  free(stack);
 }
 
 /*
@@ -47,7 +52,8 @@ void stack_free(struct stack* stack) {
  *   stack - the stack whose emptiness is being questioned.  May not be NULL.
  */
 int stack_isempty(struct stack* stack) {
-  return 1;
+  assert(stack);
+  return list_isempty(stack->list);
 }
 
 /*
@@ -60,7 +66,8 @@ int stack_isempty(struct stack* stack) {
  *     which means that a pointer of any type can be passed.
  */
 void stack_push(struct stack* stack, void* val) {
-  return;
+  assert(stack);
+  list_insert(stack->list, val);
 }
 
 /*
@@ -71,7 +78,8 @@ void stack_push(struct stack* stack, void* val) {
  *   stack - the stack from which to query the top value.  May not be NULL.
  */
 void* stack_top(struct stack* stack) {
-  return NULL;
+  assert(stack);
+  return list_head(stack->list);
 }
 
 /*
@@ -84,5 +92,8 @@ void* stack_top(struct stack* stack) {
  *   This function returns the value that was popped.
  */
 void* stack_pop(struct stack* stack) {
-  return NULL;
+  assert(stack);
+  void* head = list_head(stack->list);
+  list_remove_head(stack->list);
+  return head;
 }
