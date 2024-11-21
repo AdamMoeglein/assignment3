@@ -5,11 +5,12 @@
  * functions you might need.  Also, don't forget to include your name and
  * @oregonstate.edu email address below.
  *
- * Name:
- * Email:
+ * Name: Adam Moeglein
+ * Email: moegleia@oregonstate.edu
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "bst.h"
 #include "stack.h"
@@ -24,13 +25,13 @@
  *
  * You should not modify this structure.
  */
-struct bst_node {
+struct bst_node
+{
   int key;
-  void* value;
-  struct bst_node* left;
-  struct bst_node* right;
+  void *value;
+  struct bst_node *left;
+  struct bst_node *right;
 };
-
 
 /*
  * This structure represents an entire BST.  It specifically contains a
@@ -38,16 +39,27 @@ struct bst_node {
  *
  * You should not modify this structure.
  */
-struct bst {
-  struct bst_node* root;
+struct bst
+{
+  struct bst_node *root;
 };
 
 /*
  * This function should allocate and initialize a new, empty, BST and return
  * a pointer to it.
  */
-struct bst* bst_create() {
-  return NULL;
+struct bst *bst_create() {
+  struct bst *bst = malloc(sizeof(struct bst));
+  bst->root = NULL;
+  
+  return bst;
+}
+
+struct bst_node* node_create(void* value, int key){
+  struct bst_node* node = malloc(sizeof(struct bst_node));
+  node->left = node->right = NULL;
+  node->value = value;
+  node->key = key;
 }
 
 /*
@@ -59,8 +71,23 @@ struct bst* bst_create() {
  * Params:
  *   bst - the BST to be destroyed.  May not be NULL.
  */
-void bst_free(struct bst* bst) {
+void bst_free(struct bst *bst) {
+
+  node_free(bst->root);
+  free(bst);
   return;
+  
+}
+
+void node_free(struct bst_node* node){
+  if (node->left){
+    node_free(node->left);
+  }
+  if (node->right){
+    node_free(node->right);
+  }
+free(node);
+  
 }
 
 /*
@@ -69,10 +96,28 @@ void bst_free(struct bst* bst) {
  *
  * Params:
  *   bst - the BST whose elements are to be counted.  May not be NULL.
+ *
  */
-int bst_size(struct bst* bst) {
-  return 0;
+int bst_size_helper(struct bst_node* node){
+  if (node == NULL)
+  {
+    return (0);
+  }
+
+  else
+  {
+    return (bst_size_helper(node->left) + 1 + bst_size_helper(node->right));
+  }
+} 
+
+int bst_size(struct bst *bst)
+{
+  struct bst_node *node = bst->root;
+  return bst_size_helper(node);
+  
 }
+
+
 
 /*
  * This function should insert a new key/value pair into the BST.  The key
@@ -88,8 +133,38 @@ int bst_size(struct bst* bst) {
  *   value - the value being inserted into the BST.  This should be stored in
  *     the BST alongside the key.  Note that this parameter has type void*,
  *     which means that a pointer of any type can be passed.
+ *
  */
-void bst_insert(struct bst* bst, int key, void* value) {
+void bst_insert(struct bst *bst, int key, void *value)
+{
+  struct bst_node* new_node = node_create(value,key);
+  if (bst->root == NULL){
+    bst->root = new_node;
+    return;
+  }
+  struct bst_node *curr = NULL;
+  struct bst_node *next = bst->root;
+  
+  while (next != NULL)
+  {
+    curr = next;
+    if (key < next->key)
+    {
+      next = next->left;
+    }
+    else
+    {
+      next = next->right;
+    }
+  }
+  if (key < curr->key){
+    curr->left = new_node;
+    return;
+  }
+  else {
+    curr->right = new_node;
+  }
+  
   return;
 }
 
@@ -104,9 +179,60 @@ void bst_insert(struct bst* bst, int key, void* value) {
  *     be NULL.
  *   key - the key of the key/value pair to be removed from the BST.
  */
-void bst_remove(struct bst* bst, int key) {
-  return;
+void bst_remove(struct bst *bst, int key)
+{
+  if (bst->root == NULL){
+    return;
+  }
+   // Update the root of the BST after removal
+    bst->root = remove_node(bst->root, key);
 }
+
+// Helper function to recursively remove a node
+struct bst_node* remove_node(struct bst_node* node, int key) {
+  if (node == NULL) {
+    return NULL; // Key not found
+  }
+
+  // Traverse the tree to find the node to delete
+  if (key < node->key) {
+     node->left = remove_node(node->left, key);
+  } 
+  else if (key > node->key) {
+    node->right = remove_node(node->right, key);
+  } 
+  else {
+    // Node to be deleted is found
+
+    // Case 1: Node has no children or only a right child
+    if (node->left == NULL) {
+      struct bst_node *temp = node->right;
+      free(node);
+      return temp;
+    }
+
+    // Case 2: Node has only a left child
+    if (node->right == NULL) {
+      struct bst_node *temp = node->left;
+      free(node);
+      return temp;
+    }
+
+    // Case 3: Node has two children
+    // Find the in-order successor (smallest node in the right subtree)
+    struct bst_node *succ = get_successor(node);
+
+    // Replace the node's key and value with the successor's
+    node->key = succ->key;
+    node->value = succ->value;
+
+    // Delete the in-order successor
+    node->right = remove_node(node->right, succ->key);
+  }
+
+    return node;
+}
+
 
 /*
  * This function should return the value associated with a specified key in a
@@ -124,7 +250,24 @@ void bst_remove(struct bst* bst, int key) {
  *   Should return the value associated with the key `key` in `bst` or NULL,
  *   if the key `key` was not found in `bst`.
  */
-void* bst_get(struct bst* bst, int key) {
+void *bst_get(struct bst *bst, int key)
+{
+  struct bst_node *next = bst->root;
+  while (next != NULL)
+  {
+    if (next->key == key)
+    {
+      return next->value;
+    }
+    if (key < next->key)
+    {
+      next = next->left;
+    }
+    else
+    {
+      next = next->right;
+    }
+  }
   return NULL;
 }
 
@@ -146,9 +289,16 @@ void* bst_get(struct bst* bst, int key) {
  * Return:
  *   Should return the height of bst.
  */
- int bst_height(struct bst* bst) {
-   return 0;
- }
+int bst_height(struct bst *bst)
+{
+  struct bst_node *node = bst->root;
+  if (node == NULL){
+    return -1;
+  }
+
+  return node_height(node);
+  
+}
 
 /*
  * This function should determine whether a specified value is a valid path
@@ -164,8 +314,30 @@ void* bst_get(struct bst* bst, int key) {
  *   Should return 1 if `bst` contains any path from the root to a leaf in
  *   which the keys add up to `sum`.  Should return 0 otherwise.
  */
-int bst_path_sum(struct bst* bst, int sum) {
-  return 0;
+int has_path_sum(struct bst_node *node, int sum) {
+    // Base case: if the node is NULL, no path exists
+    if (node == NULL) {
+        return 0;
+    }
+
+    // Check if the node is a leaf
+    if (node->left == NULL && node->right == NULL) {
+        return (sum == node->key);
+    }
+
+    // Recur for left and right subtrees with the reduced sum
+    int remaining_sum = sum - node->key;
+    return has_path_sum(node->left, remaining_sum) || has_path_sum(node->right, remaining_sum);
+}
+
+int bst_path_sum(struct bst *bst, int sum) {
+    // Ensure the BST is not NULL
+    if (bst == NULL || bst->root == NULL) {
+        return 0;
+    }
+
+    // Call the helper function starting from the root
+    return has_path_sum(bst->root, sum);
 }
 
 /*
@@ -186,8 +358,32 @@ int bst_path_sum(struct bst* bst, int sum) {
  * Return:
  *   Should return the sum of all keys in `bst` between `lower` and `upper`.
  */
-int bst_range_sum(struct bst* bst, int lower, int upper) {
-  return 0;
+int range_sum_helper(struct bst_node *node, int lower, int upper) {
+    // Base case: if the node is NULL, return 0
+    if (node == NULL) {
+      return 0;
+    }
+
+    // If key less than lower, check only right
+    if (node->key < lower) {
+      return range_sum_helper(node->right, lower, upper);
+    }
+
+    // if key greater than upper, check only left
+    if (node->key > upper) {
+      return range_sum_helper(node->left, lower, upper);
+    }
+
+    // If key is within the range, include and recursively call both sides
+    return node->key + range_sum_helper(node->left, lower, upper) + range_sum_helper(node->right, lower, upper);
+}
+
+int bst_range_sum(struct bst *bst, int lower, int upper) {
+    if (bst == NULL || bst->root == NULL) {
+        return 0; 
+    }
+
+    return range_sum_helper(bst->root, lower, upper);
 }
 
 /*****************************************************************************
@@ -203,8 +399,10 @@ int bst_range_sum(struct bst* bst, int lower, int upper) {
  * You should not modify this structure.
  */
 struct bst_iterator {
-  struct stack* stack;
+  struct stack *stack;
 };
+  
+
 
 /*
  * This function should allocate and initialize an iterator over a specified
@@ -213,7 +411,8 @@ struct bst_iterator {
  * Params:
  *   bst - the BST for over which to create an iterator.  May not be NULL.
  */
-struct bst_iterator* bst_iterator_create(struct bst* bst) {
+struct bst_iterator *bst_iterator_create(struct bst *bst)
+{
   return NULL;
 }
 
@@ -225,7 +424,8 @@ struct bst_iterator* bst_iterator_create(struct bst* bst) {
  * Params:
  *   iter - the BST iterator to be destroyed.  May not be NULL.
  */
-void bst_iterator_free(struct bst_iterator* iter) {
+void bst_iterator_free(struct bst_iterator *iter)
+{
   return;
 }
 
@@ -239,7 +439,8 @@ void bst_iterator_free(struct bst_iterator* iter) {
  *   iter - the BST iterator to be checked for remaining nodes to visit.  May
  *     not be NULL.
  */
-int bst_iterator_has_next(struct bst_iterator* iter) {
+int bst_iterator_has_next(struct bst_iterator *iter)
+{
   return 0;
 }
 
@@ -268,9 +469,57 @@ int bst_iterator_has_next(struct bst_iterator* iter) {
  *   This function should return the key associated with the current BST node
  *   pointed to by `iter`.
  */
-int bst_iterator_next(struct bst_iterator* iter, void** value) {
-  if (value) {
+int bst_iterator_next(struct bst_iterator *iter, void **value)
+{
+  if (value)
+  {
     *value = NULL;
   }
   return 0;
 }
+
+//Taken from Geeksforgeeks https://www.geeksforgeeks.org/deletion-in-binary-search-tree/#
+// Finds leftmost leaf in right branch as successor.
+struct bst_node* get_successor(struct bst_node* node) {
+    struct bst_node* current = node->right;
+    while (current != NULL && current->left != NULL) {
+        current = current->left;
+    }
+    return current;
+}
+
+
+int node_height(struct bst_node* node){
+  if (node == NULL){
+    return 0;
+  }
+  int height_left = node_height(node->left);
+  int height_right = node_height(node->right);
+  if (height_left > height_right)
+  {
+    printf("Height: %d\n", height_left);
+    return height_left + 1;
+  }
+  else
+  {
+    printf("Height: %d\n", height_right);
+    return height_right + 1;
+  }
+}
+
+//Debugging functions
+void inorder_node(struct bst_node* root){
+  if (root != NULL) {
+        inorder_node(root->left);
+        printf("%d ", root->key);
+        inorder_node(root->right);
+    }
+}
+
+void inorder(struct bst* bst) {
+    inorder_node(bst->root);
+    printf("\n");
+}
+
+
+
