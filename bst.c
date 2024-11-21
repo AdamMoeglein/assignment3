@@ -188,7 +188,8 @@ void bst_remove(struct bst *bst, int key)
     bst->root = remove_node(bst->root, key);
 }
 
-// Helper function to recursively remove a node
+//Helper function to recursively remove a node
+//Based on geeksforgeeks https://www.geeksforgeeks.org/deletion-in-binary-search-tree/#
 struct bst_node* remove_node(struct bst_node* node, int key) {
   if (node == NULL) {
     return NULL; // Key not found
@@ -229,8 +230,7 @@ struct bst_node* remove_node(struct bst_node* node, int key) {
     // Delete the in-order successor
     node->right = remove_node(node->right, succ->key);
   }
-
-    return node;
+  return node;
 }
 
 
@@ -296,7 +296,7 @@ int bst_height(struct bst *bst)
     return -1;
   }
 
-  return node_height(node);
+  return node_height(node)-1;
   
 }
 

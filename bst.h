@@ -50,13 +50,11 @@ int bst_iterator_next(struct bst_iterator *iter, void **value);
 /*
 *Helper functions
 */
-
-
 struct bst_node *get_successor(struct bst_node *node);
-
 struct bst_node *remove_node(struct bst_node *node, int key);
 int node_height(struct bst_node* node);
 void node_free(struct bst_node* node);
 struct bst_node* node_create(void* value, int key);
 void inorder(struct bst* bst);
+
 #endif
